@@ -5,6 +5,7 @@ import (
   "google.golang.org/api/option"
   "golang.org/x/net/context"
   "cloud.google.com/go/firestore"
+  "errors"
   //"google.golang.org/api/iterator"
 )
 
@@ -19,7 +20,7 @@ type UserLib struct {
 	Users 	 *firestore.CollectionRef
 }
 
-func InitUser(sdkLocation string) (*UserLib, error) {
+func InitUser(sdkLocation string, database string) (*UserLib, error) {
 	var ul UserLib
 	ul.Ctx = context.Background()
 	
@@ -34,7 +35,7 @@ func InitUser(sdkLocation string) (*UserLib, error) {
 		return nil, err
 	}
 
-	ul.Users = client.Collection("Database") // This should be parameterized
+	ul.Users = client.Collection(database) // This should be parameterized
 	
 	return &ul, nil
 }
@@ -47,14 +48,18 @@ func (ul *UserLib) InsertOrUpdateData(username string, um UserModel) (error) {
 
 func (ul *UserLib) GetData(username string) (*UserModel, error) {
 	u, err := ul.Users.Doc("user/accounts/"+username).Get(ul.Ctx)
-	if (err != nil){
-		return nil, err
-	}
+	if (u.Exists()) {
+		if (err != nil){
+			return nil, err
+		}
 
-	var um UserModel
-	d := u.Data()
-	um.Fullname, _ = d["fullname"].(string)
-	um.Email, _ = d["email"].(string)
-	um.Password, _ = d["password"].(string)
-	return &um, nil
+		var um UserModel
+		d := u.Data()
+		um.Fullname, _ = d["fullname"].(string)
+		um.Email, _ = d["email"].(string)
+		um.Password, _ = d["password"].(string)
+		return &um, nil
+	} else {
+		return nil, errors.New("Not found")
+	}
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func TestInsertandValidateUser(t *testing.T){
-	u, err := InitUser("../sdk.json")
+	u, err := InitUser("../sdk.json", "Database")
 	if (err != nil){
 		t.Fatalf("%v\n",err)
 	}
@@ -33,3 +33,17 @@ func TestInsertandValidateUser(t *testing.T){
 	}
 }
 
+func TestNonExistentData(t *testing.T){
+	u, err := InitUser("../sdk.json", "Database")
+	if (err != nil){
+		t.Fatalf("%v\n",err)
+	}
+	fmt.Println("Successfully loaded!")
+
+	username := "nonexistent!_+$@)(2020+_'"
+	_, err = u.GetData(username)
+
+	if (strings.Compare(err.Error(),"Not found") != 0) {
+		t.Fatalf("The error 'Not found' should be here for username %v\n",username)
+	} 
+}
